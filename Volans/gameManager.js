@@ -39,7 +39,87 @@ class Entity{
   draw(){
 	return; 
   }
-}	
+}
+
+class Projectile extends Entity{
+	constructor(x,y, initialSpeed, speed, dmg){
+		super(x,y);
+		this.speed = speed;
+		this.dmg = dmg;
+		this.initialSpeed = initialSpeed;
+	}
+	draw(){
+		ctx.beginPath();
+		let startPos = positionToScreen(this.position[0]-this.initialSpeed[0]/2, this.position[1]-this.initialSpeed[1]/2);
+		
+		ctx.moveTo(startPos[0], startPos[1]);
+
+		startPos = positionToScreen(this.position[0]+this.initialSpeed[0]/2, this.position[1]+this.initialSpeed[1]/2);
+
+		ctx.lineTo(startPos[0], startPos[1]);
+		ctx.stroke();
+		ctx.closePath();
+	}
+	timeStep(){
+		this.position[2] -= this.initialSpeed[0] * this.speed;
+		this.position[3] -= this.initialSpeed[1] * this.speed;
+		super.timeStep();
+	}
+}
+
+function GetCloserEnnemy(){
+	let closerDistance = Infinity;
+	let closerIdx = -1;
+	for(let i = 0; i < monsterArray.length; i++){
+
+		let enemy = monsterArray[i];
+
+		let gapVectX = currPlayer.position[0] - enemy.position[0];
+		let gapVectY = currPlayer.position[1] - enemy.position[1];
+
+		let dist = Math.sqrt(gapVectX**2 + gapVectY**2);
+
+		if(dist < closerDistance){
+			closerDistance = dist;
+			closerIdx = i;
+		}
+
+	}
+	if(closerIdx == -1){
+		return null;
+	}
+	else{
+		return monsterArray[closerIdx];
+	}
+}
+
+var projectileArray = [];
+
+class Weapon{
+	constructor(refreshRate, speed, dmg){
+		this.refreshRate = refreshRate;
+		this.speed = speed;
+		this.dmg = dmg;
+	}
+	fire(){
+		if(currentTime % this.refreshRate == 0){
+			let enemy = GetCloserEnnemy();
+			if(enemy != null){
+				let gapVectX = currPlayer.position[0] - enemy.position[0];
+				let gapVectY = currPlayer.position[1] - enemy.position[1];
+
+				let gapVectNorm = Math.sqrt(gapVectX**2 + gapVectY**2);
+				gapVectX /= gapVectNorm;
+				gapVectY /= gapVectNorm;
+
+				let thisProj = new Projectile(currPlayer.position[0], currPlayer.position[1],
+					[gapVectX, gapVectY], this.speed, this.dmg);
+				
+				projectileArray.push(thisProj);
+			}
+		}
+	}
+}
 
 class Player extends Entity{
   constructor(x,y) {
@@ -47,20 +127,27 @@ class Player extends Entity{
 	this.speed = 1;
     this.maxHealth = initHealth;
 	this.currHealth = this.maxHealth;
+	this.weaponArray = [new Weapon(5,0.5,10)];
   }
   draw(){
 	ctx.beginPath();
 	let screenPos = positionToScreen(this.position[0], this.position[1])
-	ctx.rect(screenPos[0], screenPos[1], 10, 10);
+	ctx.rect(screenPos[0]-5, screenPos[1]-5, 10, 10);
 	ctx.fillStyle = "#0095DD";
 	ctx.fill();
 	ctx.closePath(); 
+  }
+  weaponStep(){
+	  for(let weaponIdx = 0; weaponIdx < this.weaponArray.length; weaponIdx++){
+		this.weaponArray[weaponIdx].fire();
+	  }
   }
 }
 
 class Target extends Entity{
 	constructor(x,y) {
 		super(x,y);
+		this.speed = 0.8;
 	}
 		draw(){
 		ctx.beginPath();
@@ -78,8 +165,8 @@ class Target extends Entity{
 		gapVectX /= gapVectNorm;
 		gapVectY /= gapVectNorm;
 
-		this.position[2] -= gapVectX;
-		this.position[3] -= gapVectY;
+		this.position[2] -= gapVectX * this.speed;
+		this.position[3] -= gapVectY * this.speed;
 		super.timeStep();
 	}
 }
@@ -130,11 +217,17 @@ function drawTarget()
 	}
 }
 
+function drawProjectiles(){
+	for(let i = 0; i < projectileArray.length; i++){
+		projectileArray[i].draw();
+	}
+}
+
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	currPlayer.draw();
 	drawTarget();
-
+	drawProjectiles();
 	let xAcc = currPlayer.position[2];
 	let yAcc = currPlayer.position[3];
 	
@@ -146,8 +239,8 @@ function draw() {
 function spawnMonster(){
 
 	let angle = Math.random() * 2*Math.PI;
-	let x = (Math.cos(angle) + 1) * (xMax - xMin);
-	let y = (Math.sin(angle) + 1) * (yMax - yMin); 
+	let x = (2*Math.cos(angle)) * (xMax - xMin);
+	let y = (2*Math.sin(angle)) * (yMax - yMin); 
 	let currMonster = new Target(x,y);
 	monsterArray.push(currMonster);
 }
@@ -156,6 +249,13 @@ function playTargets(){
 
 	for(let i = 0; i < monsterArray.length; i++){
 		monsterArray[i].timeStep();
+	}
+}
+
+function playProjectiles(){
+
+	for(let i = 0; i < projectileArray.length; i++){
+		projectileArray[i].timeStep();
 	}
 }
 
@@ -175,7 +275,9 @@ function frameManager() {
 	}
 	
 	currPlayer.timeStep();
+	currPlayer.weaponStep();
 	playTargets();
+	playProjectiles();
 	currentTime++;
 	
 	if(currentTime%10 == 0){
