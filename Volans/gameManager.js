@@ -48,14 +48,17 @@ class Projectile extends Entity{
 		this.dmg = dmg;
 		this.initialSpeed = initialSpeed;
 		this.toDelete = false;
+		this.size = 0.1;
 	}
 	draw(){
 		ctx.beginPath();
-		let startPos = positionToScreen(this.position[0]-this.initialSpeed[0]/2, this.position[1]-this.initialSpeed[1]/2);
+		let startPos = positionToScreen(this.position[0]-(this.size*this.initialSpeed[0]/2),
+		this.position[1]-(this.size*this.initialSpeed[1]/2));
 		
 		ctx.moveTo(startPos[0], startPos[1]);
 
-		startPos = positionToScreen(this.position[0]+this.initialSpeed[0]/2, this.position[1]+this.initialSpeed[1]/2);
+		startPos = positionToScreen(this.position[0]+(this.size*this.initialSpeed[0]/2),
+		 this.position[1]+(this.size*this.initialSpeed[1]/2));
 
 		ctx.lineTo(startPos[0], startPos[1]);
 		ctx.stroke();
@@ -66,6 +69,23 @@ class Projectile extends Entity{
 		this.position[3] -= this.initialSpeed[1] * this.speed;
 		super.timeStep();
 	}
+}
+
+class XPNugget extends Entity
+{
+	constructor(x,y, xpValue){
+		super(x,y);
+		this.xpValue = xpValue;
+		this.toDelete = false;
+	}
+	draw(){
+		ctx.beginPath();
+		let screenPos = positionToScreen(this.position[0], this.position[1])
+		ctx.arc(screenPos[0], screenPos[1], 2, 0, 2 * Math.PI);
+		ctx.fillStyle = "#ff0000";
+		ctx.fill();
+		ctx.closePath(); 
+	  }
 }
 
 function GetCloserEnnemy(){
@@ -95,6 +115,7 @@ function GetCloserEnnemy(){
 }
 
 var projectileArray = [];
+var xpArray = [];
 
 class Weapon{
 	constructor(refreshRate, speed, dmg){
@@ -128,7 +149,9 @@ class Player extends Entity{
 	this.speed = 1;
     this.maxHealth = initHealth;
 	this.currHealth = this.maxHealth;
-	this.weaponArray = [new Weapon(5,0.5,10)];
+	this.weaponArray = [new Weapon(50,3,10)];
+	this.level = 0;
+	this.currentXp = 0;
   }
   draw(){
 	ctx.beginPath();
@@ -226,11 +249,31 @@ function drawProjectiles(){
 	}
 }
 
+function drawXPShard(){
+	for(let i = 0; i < xpArray.length; i++){
+		xpArray[i].draw();
+	}
+}
+
+function drawXPBar(){
+	ctx.beginPath();
+	let screenPosMin = positionToScreen(xMin, yMin);
+	let screenPosMax = positionToScreen(xMax, yMax);
+	
+	ctx.fillStyle = "#0e7d20";
+	ctx.fillRect(screenPosMin[0], screenPosMin[1], (screenPosMax[0] - screenPosMin[0]) * (currPlayer.currentXp - (currPlayer.level*20 + 10)), 10);
+	ctx.strokeRect(screenPosMin[0], screenPosMin[1], screenPosMax[0] - screenPosMin[0], 10);
+
+	ctx.closePath(); 
+}
+
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	currPlayer.draw();
 	drawTarget();
 	drawProjectiles();
+	drawXPShard();
+	drawXPBar();
 	let xAcc = currPlayer.position[2];
 	let yAcc = currPlayer.position[3];
 	
@@ -254,7 +297,12 @@ function playTargets(){
 	while (i--) {
 		monsterArray[i].timeStep();
 		if (monsterArray[i].currHealth<=0) { 
+			let monsterxPos = monsterArray[i].position[0];
+			let monsteryPos = monsterArray[i].position[1];
+			
 			monsterArray.splice(i, 1);
+			let newShard = new XPNugget(monsterxPos, monsteryPos, 1);
+			xpArray.push(newShard);
 		} 
 	}
 }
@@ -296,13 +344,13 @@ function frameManager() {
 }
 
 function CheckCollision(proj, monster){
-	if((proj.position[0] - monster.position[0])**2 + (proj.position[1] - monster.position[1])**2 < 1){
+	if((proj.position[0] - monster.position[0])**2 + (proj.position[1] - monster.position[1])**2 < (0.5/2)**2){
 		monster.currHealth -= proj.dmg;
 		const projI = projectileArray.indexOf(proj);
 		if(projI>-1){
 			projectileArray[projI].toDelete = true;
 		}
-	}
+	} 
 }
 
 function collisionDetection(){
@@ -318,6 +366,28 @@ function collisionDetection(){
 			projectileArray.splice(i, 1);
 		} 
 	}
+
+	for(let shardI = 0; shardI < xpArray.length; shardI++){
+
+		let xpShard = xpArray[shardI];
+
+		if((xpShard.position[0] - currPlayer.position[0])**2 + (xpShard.position[1] - currPlayer.position[1])**2 < (2/2)**2){
+			currPlayer.currentXp += xpShard.xpValue;
+			const projI = xpArray.indexOf(xpShard);
+			if(projI>-1){
+				xpShard.toDelete = true;
+			}
+		} 
+	}
+
+	i = xpArray.length;
+	while (i--) {
+		if (xpArray[i].toDelete) { 
+			xpArray.splice(i, 1);
+		} 
+	}
+
+	
 }
 
 
