@@ -47,6 +47,7 @@ class Projectile extends Entity{
 		this.speed = speed;
 		this.dmg = dmg;
 		this.initialSpeed = initialSpeed;
+		this.toDelete = false;
 	}
 	draw(){
 		ctx.beginPath();
@@ -148,6 +149,8 @@ class Target extends Entity{
 	constructor(x,y) {
 		super(x,y);
 		this.speed = 0.8;
+		this.maxHealth = 10;
+		this.currHealth = this.maxHealth;
 	}
 		draw(){
 		ctx.beginPath();
@@ -247,8 +250,12 @@ function spawnMonster(){
 
 function playTargets(){
 
-	for(let i = 0; i < monsterArray.length; i++){
+	let i = monsterArray.length;
+	while (i--) {
 		monsterArray[i].timeStep();
+		if (monsterArray[i].currHealth<=0) { 
+			monsterArray.splice(i, 1);
+		} 
 	}
 }
 
@@ -278,6 +285,7 @@ function frameManager() {
 	currPlayer.weaponStep();
 	playTargets();
 	playProjectiles();
+	collisionDetection();
 	currentTime++;
 	
 	if(currentTime%10 == 0){
@@ -287,7 +295,30 @@ function frameManager() {
 	draw();
 }
 
+function CheckCollision(proj, monster){
+	if((proj.position[0] - monster.position[0])**2 + (proj.position[1] - monster.position[1])**2 < 1){
+		monster.currHealth -= proj.dmg;
+		const projI = projectileArray.indexOf(proj);
+		if(projI>-1){
+			projectileArray[projI].toDelete = true;
+		}
+	}
+}
 
+function collisionDetection(){
+	for(let proji = 0; proji < projectileArray.length; proji++){
+		for(let monsteri = 0; monsteri < monsterArray.length; monsteri++){
+			CheckCollision(projectileArray[proji], monsterArray[monsteri])
+		}
+	}
+
+	let i = projectileArray.length;
+	while (i--) {
+		if (projectileArray[i].toDelete) { 
+			projectileArray.splice(i, 1);
+		} 
+	}
+}
 
 
 var currPlayer = new Player(10,10);
