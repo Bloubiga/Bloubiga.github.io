@@ -166,6 +166,15 @@ class Player extends Entity{
 		this.weaponArray[weaponIdx].fire();
 	  }
   }
+  timeStep(){
+	  if(this.currentXp >= currPlayer.level*20.0 + 10.0)
+	  {
+		  this.level++;
+		  this.weaponArray.push(new Weapon(Math.ceil(50/this.level),3+this.level,10+2*this.level));
+		  this.currentXp -= currPlayer.level*20.0 + 10.0;
+	  }
+	  super.timeStep()
+  }
 }
 
 class Target extends Entity{
@@ -261,7 +270,9 @@ function drawXPBar(){
 	let screenPosMax = positionToScreen(xMax, yMax);
 	
 	ctx.fillStyle = "#0e7d20";
-	ctx.fillRect(screenPosMin[0], screenPosMin[1], (screenPosMax[0] - screenPosMin[0]) * (currPlayer.currentXp - (currPlayer.level*20 + 10)), 10);
+	let nextLvlXp = currPlayer.level*20.0 + 10.0;
+	let xpRatio = currPlayer.currentXp/nextLvlXp;
+	ctx.fillRect(screenPosMin[0], screenPosMin[1], (screenPosMax[0] - screenPosMin[0]) * xpRatio, 10);
 	ctx.strokeRect(screenPosMin[0], screenPosMin[1], screenPosMax[0] - screenPosMin[0], 10);
 
 	ctx.closePath(); 
@@ -311,6 +322,14 @@ function playProjectiles(){
 
 	for(let i = 0; i < projectileArray.length; i++){
 		projectileArray[i].timeStep();
+	}
+	
+	let i = projectileArray.length;
+	while (i--) {
+		if (projectileArray[i].position[0]<xMin || projectileArray[i].position[0]>xMax ||
+			 projectileArray[i].position[1]<yMin || projectileArray[i].position[1]>yMax) { 
+			projectileArray.splice(i, 1);
+		} 
 	}
 }
 
