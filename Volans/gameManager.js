@@ -172,6 +172,7 @@ class Player extends Entity{
 		  this.level++;
 		  this.weaponArray.push(new Weapon(Math.ceil(50/this.level),3+this.level,10+2*this.level));
 		  this.currentXp -= currPlayer.level*20.0 + 10.0;
+		  pause = true;
 	  }
 	  super.timeStep()
   }
@@ -208,12 +209,48 @@ class Target extends Entity{
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+canvas.addEventListener("click", clickHandler, false);
 
 var rightPressed = false;
 var leftPressed = false;
 var topPressed = false;
 var downPressed = false;
 
+function solveClick(x, y)
+{
+	console.log(x, y);
+	if(pause)
+	{
+		let basechoice = 3;
+		let choiceNb = basechoice;
+
+		let width = canvas.width;
+		let height = canvas.height;
+
+		let margin  = 50;
+
+		let separation = 20;
+
+		let choiceWidth = width - margin;
+		let choiceHeight = (height - margin)/choiceNb;
+
+
+		for(let choiceIdx = 0; choiceIdx<choiceNb; choiceIdx++)
+		{
+			if(x > margin/2 && x < margin/2 + choiceWidth &&
+				 y > margin/2 + choiceIdx*choiceHeight + separation/2 && y < margin/2 + choiceIdx*choiceHeight + choiceHeight)
+			{
+				pause = false;
+			}
+		}
+	}
+}
+
+function clickHandler(e) {
+	if (e.button == 0) {
+		solveClick(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
+	}
+}
 
 function keyDownHandler(e) {
 	if (e.key == "Right" || e.key == "ArrowRight") {
@@ -280,16 +317,21 @@ function drawXPBar(){
 
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	currPlayer.draw();
-	drawTarget();
-	drawProjectiles();
-	drawXPShard();
-	drawXPBar();
-	let xAcc = currPlayer.position[2];
-	let yAcc = currPlayer.position[3];
-	
-	ctx.strokeText(String(Number(xAcc).toFixed(2)), 10, 50);
-	ctx.strokeText(String(Number(yAcc).toFixed(2)), 10, 60); 	
+	if(!pause){
+		currPlayer.draw();
+		drawTarget();
+		drawProjectiles();
+		drawXPShard();
+		drawXPBar();
+		let xAcc = currPlayer.position[2];
+		let yAcc = currPlayer.position[3];
+		
+		ctx.strokeText(String(Number(xAcc).toFixed(2)), 10, 50);
+		ctx.strokeText(String(Number(yAcc).toFixed(2)), 10, 60);
+	}
+	else{
+		drawChoice();
+	}
 	
 }
  
@@ -333,32 +375,61 @@ function playProjectiles(){
 	}
 }
 
+
+function drawChoice(){
+	let basechoice = 3;
+	let choiceNb = basechoice; //+ Math.round(Math.random());
+
+	let width = canvas.width;
+	let height = canvas.height;
+
+	let margin  = 50;
+
+	let separation = 20;
+
+	let choiceWidth = width - margin;
+	let choiceHeight = (height - margin)/choiceNb;
+
+
+	for(let choiceIdx = 0; choiceIdx<choiceNb; choiceIdx++)
+	{
+		ctx.beginPath();
+		ctx.fillStyle = "#0e7d20";
+		ctx.strokeRect(margin/2, margin/2 + choiceIdx*choiceHeight + separation/2, choiceWidth, choiceHeight - separation/2);
+		ctx.closePath(); 
+	}
+}
+
 function frameManager() {
-	
-	if(rightPressed){
-		currPlayer.position[2] += currPlayer.speed;
+	if(!pause)
+	{
+		if(rightPressed){
+			currPlayer.position[2] += currPlayer.speed;
+		}
+		if(leftPressed){
+			currPlayer.position[2] -= currPlayer.speed;
+		}
+		if(downPressed){
+			currPlayer.position[3] += currPlayer.speed;
+		}
+		if(topPressed){
+			currPlayer.position[3] -= currPlayer.speed;
+		}
+		
+		currPlayer.timeStep();
+		currPlayer.weaponStep();
+		playTargets();
+		playProjectiles();
+		collisionDetection();
+		currentTime++;
+		
+		if(currentTime%10 == 0){
+			spawnMonster();
+		}
+
+		
+		
 	}
-	if(leftPressed){
-		currPlayer.position[2] -= currPlayer.speed;
-	}
-	if(downPressed){
-		currPlayer.position[3] += currPlayer.speed;
-	}
-	if(topPressed){
-		currPlayer.position[3] -= currPlayer.speed;
-	}
-	
-	currPlayer.timeStep();
-	currPlayer.weaponStep();
-	playTargets();
-	playProjectiles();
-	collisionDetection();
-	currentTime++;
-	
-	if(currentTime%10 == 0){
-		spawnMonster();
-	}
-	
 	draw();
 }
 
@@ -409,6 +480,7 @@ function collisionDetection(){
 	
 }
 
+var pause = false;
 
 var currPlayer = new Player(10,10);
 
