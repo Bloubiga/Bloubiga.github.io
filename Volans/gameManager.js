@@ -210,15 +210,23 @@ class Target extends Entity{
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 canvas.addEventListener("click", clickHandler, false);
+canvas.addEventListener("mousemove", moveHandler, false);
 
 var rightPressed = false;
 var leftPressed = false;
 var topPressed = false;
 var downPressed = false;
 
+var pickArray = [0,0,0];
+
+
+
+function pickRandomWeapon(){
+	return 
+}
+
 function solveClick(x, y)
 {
-	console.log(x, y);
 	if(pause)
 	{
 		let basechoice = 3;
@@ -243,6 +251,39 @@ function solveClick(x, y)
 				pause = false;
 			}
 		}
+	}
+}
+
+function solveMove(x, y)
+{
+	if(pause)
+	{
+		let basechoice = 3;
+		let choiceNb = basechoice;
+
+		let width = canvas.width;
+		let height = canvas.height;
+
+		let margin  = 50;
+
+		let separation = 20;
+
+		let choiceWidth = width - margin;
+		let choiceHeight = (height - margin)/choiceNb;
+
+
+		for(let choiceIdx = 0; choiceIdx<choiceNb; choiceIdx++)
+		{
+			let selectedBool = x > margin/2 && x < margin/2 + choiceWidth &&
+			y > margin/2 + choiceIdx*choiceHeight + separation/2 && y < margin/2 + choiceIdx*choiceHeight + choiceHeight
+			pickArray[choiceIdx] = selectedBool;
+		}
+	}
+}
+
+function moveHandler(e) {
+	if (e.button == 0) {
+		solveMove(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
 	}
 }
 
@@ -394,7 +435,14 @@ function drawChoice(){
 	for(let choiceIdx = 0; choiceIdx<choiceNb; choiceIdx++)
 	{
 		ctx.beginPath();
-		ctx.fillStyle = "#0e7d20";
+		if(pickArray[choiceIdx]){
+			ctx.strokeStyle = "#0e7d20";
+			ctx.lineWidth = 3;
+		}
+		else{
+			ctx.strokeStyle = "#c93b14";
+			ctx.lineWidth = 1;
+		}
 		ctx.strokeRect(margin/2, margin/2 + choiceIdx*choiceHeight + separation/2, choiceWidth, choiceHeight - separation/2);
 		ctx.closePath(); 
 	}
