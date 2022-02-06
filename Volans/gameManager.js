@@ -12,108 +12,6 @@ var dt = 0.010;
 var xRatio = canvas.width / (xMax - xMin)
 var yRatio = canvas.height / (yMax - yMin)
 
-function screenToPosition(x, y){
-	let translatedX  = x / xRatio + xMin;
-	let translatedY  = y / yRatio + yMin;
-	return translatedX, translatedY;
-}
-
-function positionToScreen(posX, posY){
-	let screenx = (posX - xMin) * xRatio;
-	let screeny = (posY - yMin) * yRatio;
-	return [screenx, screeny];
-}
-
-class Entity{
-  constructor(x,y) {
-    this.position = [x,y,0,0];
-	this.speed = 0;
-  }
-  timeStep(){
-	this.position[2] *= 0.8;
-	this.position[3] *= 0.8;
-    this.position[0] += dt * this.position [2];
-	this.position[1] += dt * this.position [3];
-	return;
-  }
-  draw(){
-	return; 
-  }
-}
-
-class Projectile extends Entity{
-	constructor(x,y, initialSpeed, speed, dmg){
-		super(x,y);
-		this.speed = speed;
-		this.dmg = dmg;
-		this.initialSpeed = initialSpeed;
-		this.toDelete = false;
-		this.size = 0.1;
-	}
-	draw(){
-		ctx.beginPath();
-		let startPos = positionToScreen(this.position[0]-(this.size*this.initialSpeed[0]/2),
-		this.position[1]-(this.size*this.initialSpeed[1]/2));
-		
-		ctx.moveTo(startPos[0], startPos[1]);
-
-		startPos = positionToScreen(this.position[0]+(this.size*this.initialSpeed[0]/2),
-		 this.position[1]+(this.size*this.initialSpeed[1]/2));
-
-		ctx.lineTo(startPos[0], startPos[1]);
-		ctx.stroke();
-		ctx.closePath();
-	}
-	timeStep(){
-		this.position[2] -= this.initialSpeed[0] * this.speed;
-		this.position[3] -= this.initialSpeed[1] * this.speed;
-		super.timeStep();
-	}
-}
-
-class XPNugget extends Entity
-{
-	constructor(x,y, xpValue){
-		super(x,y);
-		this.xpValue = xpValue;
-		this.toDelete = false;
-	}
-	draw(){
-		ctx.beginPath();
-		let screenPos = positionToScreen(this.position[0], this.position[1])
-		ctx.arc(screenPos[0], screenPos[1], 2, 0, 2 * Math.PI);
-		ctx.fillStyle = "#ff0000";
-		ctx.fill();
-		ctx.closePath(); 
-	  }
-}
-
-function GetCloserEnnemy(){
-	let closerDistance = Infinity;
-	let closerIdx = -1;
-	for(let i = 0; i < monsterArray.length; i++){
-
-		let enemy = monsterArray[i];
-
-		let gapVectX = currPlayer.position[0] - enemy.position[0];
-		let gapVectY = currPlayer.position[1] - enemy.position[1];
-
-		let dist = Math.sqrt(gapVectX**2 + gapVectY**2);
-
-		if(dist < closerDistance){
-			closerDistance = dist;
-			closerIdx = i;
-		}
-
-	}
-	if(closerIdx == -1){
-		return null;
-	}
-	else{
-		return monsterArray[closerIdx];
-	}
-}
-
 var projectileArray = [];
 var xpArray = [];
 
@@ -143,69 +41,7 @@ class Weapon{
 	}
 }
 
-class Player extends Entity{
-  constructor(x,y) {
-    super(x,y);
-	this.speed = 1;
-    this.maxHealth = initHealth;
-	this.currHealth = this.maxHealth;
-	this.weaponArray = [new Weapon(50,3,10)];
-	this.level = 0;
-	this.currentXp = 0;
-  }
-  draw(){
-	ctx.beginPath();
-	let screenPos = positionToScreen(this.position[0], this.position[1])
-	ctx.rect(screenPos[0]-5, screenPos[1]-5, 10, 10);
-	ctx.fillStyle = "#0095DD";
-	ctx.fill();
-	ctx.closePath(); 
-  }
-  weaponStep(){
-	  for(let weaponIdx = 0; weaponIdx < this.weaponArray.length; weaponIdx++){
-		this.weaponArray[weaponIdx].fire();
-	  }
-  }
-  timeStep(){
-	  if(this.currentXp >= currPlayer.level*20.0 + 10.0)
-	  {
-		  this.level++;
-		  this.weaponArray.push(new Weapon(Math.ceil(50/this.level),3+this.level,10+2*this.level));
-		  this.currentXp -= currPlayer.level*20.0 + 10.0;
-		  pause = true;
-	  }
-	  super.timeStep()
-  }
-}
 
-class Target extends Entity{
-	constructor(x,y) {
-		super(x,y);
-		this.speed = 0.8;
-		this.maxHealth = 10;
-		this.currHealth = this.maxHealth;
-	}
-		draw(){
-		ctx.beginPath();
-		let screenPos = positionToScreen(this.position[0], this.position[1])
-		ctx.arc(screenPos[0], screenPos[1], 5, 0, 2 * Math.PI);
-		ctx.fillStyle = "#000000";
-		ctx.fill();
-		ctx.closePath(); 
-	}
-	timeStep(){
-		let gapVectX = this.position[0] - currPlayer.position[0];
-		let gapVectY = this.position[1] - currPlayer.position[1];
-
-		let gapVectNorm = Math.sqrt(gapVectX**2 + gapVectY**2);
-		gapVectX /= gapVectNorm;
-		gapVectY /= gapVectNorm;
-
-		this.position[2] -= gapVectX * this.speed;
-		this.position[3] -= gapVectY * this.speed;
-		super.timeStep();
-	}
-}
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -218,8 +54,6 @@ var topPressed = false;
 var downPressed = false;
 
 var pickArray = [0,0,0];
-
-
 
 function pickRandomWeapon(){
 	return 
@@ -322,59 +156,6 @@ function keyUpHandler(e) {
 		downPressed = false;
 	}
 }
-
-function drawTarget()
-{
-	for(let i = 0; i < monsterArray.length; i++){
-		monsterArray[i].draw();
-	}
-}
-
-function drawProjectiles(){
-	for(let i = 0; i < projectileArray.length; i++){
-		projectileArray[i].draw();
-	}
-}
-
-function drawXPShard(){
-	for(let i = 0; i < xpArray.length; i++){
-		xpArray[i].draw();
-	}
-}
-
-function drawXPBar(){
-	ctx.beginPath();
-	let screenPosMin = positionToScreen(xMin, yMin);
-	let screenPosMax = positionToScreen(xMax, yMax);
-	
-	ctx.fillStyle = "#0e7d20";
-	let nextLvlXp = currPlayer.level*20.0 + 10.0;
-	let xpRatio = currPlayer.currentXp/nextLvlXp;
-	ctx.fillRect(screenPosMin[0], screenPosMin[1], (screenPosMax[0] - screenPosMin[0]) * xpRatio, 10);
-	ctx.strokeRect(screenPosMin[0], screenPosMin[1], screenPosMax[0] - screenPosMin[0], 10);
-
-	ctx.closePath(); 
-}
-
-function draw() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if(!pause){
-		currPlayer.draw();
-		drawTarget();
-		drawProjectiles();
-		drawXPShard();
-		drawXPBar();
-		let xAcc = currPlayer.position[2];
-		let yAcc = currPlayer.position[3];
-		
-		ctx.strokeText(String(Number(xAcc).toFixed(2)), 10, 50);
-		ctx.strokeText(String(Number(yAcc).toFixed(2)), 10, 60);
-	}
-	else{
-		drawChoice();
-	}
-	
-}
  
 function spawnMonster(){
 
@@ -416,38 +197,6 @@ function playProjectiles(){
 	}
 }
 
-
-function drawChoice(){
-	let basechoice = 3;
-	let choiceNb = basechoice; //+ Math.round(Math.random());
-
-	let width = canvas.width;
-	let height = canvas.height;
-
-	let margin  = 50;
-
-	let separation = 20;
-
-	let choiceWidth = width - margin;
-	let choiceHeight = (height - margin)/choiceNb;
-
-
-	for(let choiceIdx = 0; choiceIdx<choiceNb; choiceIdx++)
-	{
-		ctx.beginPath();
-		if(pickArray[choiceIdx]){
-			ctx.strokeStyle = "#0e7d20";
-			ctx.lineWidth = 3;
-		}
-		else{
-			ctx.strokeStyle = "#c93b14";
-			ctx.lineWidth = 1;
-		}
-		ctx.strokeRect(margin/2, margin/2 + choiceIdx*choiceHeight + separation/2, choiceWidth, choiceHeight - separation/2);
-		ctx.closePath(); 
-	}
-}
-
 function frameManager() {
 	if(!pause)
 	{
@@ -479,53 +228,6 @@ function frameManager() {
 		
 	}
 	draw();
-}
-
-function CheckCollision(proj, monster){
-	if((proj.position[0] - monster.position[0])**2 + (proj.position[1] - monster.position[1])**2 < (0.5/2)**2){
-		monster.currHealth -= proj.dmg;
-		const projI = projectileArray.indexOf(proj);
-		if(projI>-1){
-			projectileArray[projI].toDelete = true;
-		}
-	} 
-}
-
-function collisionDetection(){
-	for(let proji = 0; proji < projectileArray.length; proji++){
-		for(let monsteri = 0; monsteri < monsterArray.length; monsteri++){
-			CheckCollision(projectileArray[proji], monsterArray[monsteri])
-		}
-	}
-
-	let i = projectileArray.length;
-	while (i--) {
-		if (projectileArray[i].toDelete) { 
-			projectileArray.splice(i, 1);
-		} 
-	}
-
-	for(let shardI = 0; shardI < xpArray.length; shardI++){
-
-		let xpShard = xpArray[shardI];
-
-		if((xpShard.position[0] - currPlayer.position[0])**2 + (xpShard.position[1] - currPlayer.position[1])**2 < (2/2)**2){
-			currPlayer.currentXp += xpShard.xpValue;
-			const projI = xpArray.indexOf(xpShard);
-			if(projI>-1){
-				xpShard.toDelete = true;
-			}
-		} 
-	}
-
-	i = xpArray.length;
-	while (i--) {
-		if (xpArray[i].toDelete) { 
-			xpArray.splice(i, 1);
-		} 
-	}
-
-	
 }
 
 var pause = false;
