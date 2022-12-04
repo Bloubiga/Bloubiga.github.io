@@ -23,7 +23,37 @@ class Weapon {
             }
         }
     }
+    resolveSpecialCollision(currEntity)
+    {
+
+    }
+
     resolveCollision(currEntity) {
         currEntity.currHealth -= this.dmg;
+        this.resolveSpecialCollision(currEntity);
+    }
+
+    getUpgradeOption()
+    {
+        let wc;
+
+        let optionRnd = Math.random();
+        if(optionRnd < 0.3)
+        {
+            wc = WeaponStatChoice.DMG;
+        }
+        else{
+            if(optionRnd < 0.6)
+            {
+                wc = WeaponStatChoice.RATE;
+            }
+            else
+            {
+                wc = WeaponStatChoice.SPEED;
+            }
+        }
+        
+        let currOpt = new upgradeWeaponOption(this, wc);
+        return currOpt;
     }
 }

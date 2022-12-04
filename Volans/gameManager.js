@@ -30,10 +30,13 @@ var downPressed = false;
 
 var pickArray = [0, 0, 0];
 
+
+
+
 function pickRandomWeapon() {
     let idx = Math.floor(Math.random() * weaponBucketIteration.length);
     let returnWeapon = weaponBucketIteration[idx];
-    let weapon = new returnWeapon(5,5,0);
+    let weapon = new returnWeapon(5,5,10);
     //weaponBucketIteration.splice(idx);
     return weapon;
 }
@@ -56,8 +59,9 @@ function solveClick(x, y) {
         for (let choiceIdx = 0; choiceIdx < choiceNb; choiceIdx++) {
             if (x > margin / 2 && x < margin / 2 + choiceWidth &&
                 y > margin / 2 + choiceIdx * choiceHeight + separation / 2 && y < margin / 2 + choiceIdx * choiceHeight + choiceHeight) {
-                let addedWeapon = levelUpChoiceArray[choiceIdx];
-                currPlayer.weaponArray.push(addedWeapon);
+                let selectedOption = levelUpChoiceArray[choiceIdx];
+                selectedOption.resolve();
+                //currPlayer.weaponArray.push(addedWeapon);
                 pause = false;
                 
 
@@ -137,6 +141,7 @@ function spawnMonster() {
     let x = (2 * Math.cos(angle)) * (xMax - xMin);
     let y = (2 * Math.sin(angle)) * (yMax - yMin);
     let currMonster = new Target(x, y);
+    currMonster.speed = Math.min(4,1 + currentTime/100) * 0.8;
     monsterArray.push(currMonster);
 }
 
@@ -155,6 +160,19 @@ function playTargets() {
         }
     }
 }
+
+
+function playAoE() {
+
+    let i = aoeArray.length;
+    while (i--) {
+        aoeArray[i].timeStep();
+        if (aoeArray[i].lifetime + aoeArray[i].offset < currentTime) {
+            aoeArray.splice(i, 1);
+        }
+    }
+}
+
 
 function playProjectiles() {
 
@@ -187,13 +205,13 @@ function frameManager() {
         }
 
         currPlayer.timeStep();
-        currPlayer.weaponStep();
         playTargets();
         playProjectiles();
+        playAoE();
         collisionDetection();
         currentTime++;
 
-        if (currentTime % 10 == 0) {
+        if (currentTime % 2 == 0) {
             spawnMonster();
         }
     }

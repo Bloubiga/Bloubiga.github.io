@@ -37,58 +37,38 @@ function GetCloserEnnemy() {
 }
 
 function levelUp() {
-    levelUpChoiceArray = [];
+    chooseOptions();
     pause = true;
-    let choiceNb = 3 + Math.round(Math.random());
+    
+}
+
+function chooseOptions()
+{
+    levelUpChoiceArray = [];
+    let choiceNb = 3;
     for (let i = 0; i < choiceNb; i++) {
-        levelUpChoiceArray.push(pickRandomWeapon());
+        //Choice iteration
+        let randIt = Math.random()
+
+        let currOption;
+
+        if(randIt < 0.1) //new weapon, low chance
+        {
+            let wp = pickRandomWeapon();
+            currOption = new newWeaponOption(wp);
+        }
+        else{
+            let wpRef = pickCurrentPlayerWeaponRd();
+            currOption = wpRef.getUpgradeOption();
+        }
+
+        levelUpChoiceArray.push(currOption);
+
     }
 }
 
-
-function CheckCollision(proj, monster) {
-    if ((proj.position[0] - monster.position[0]) ** 2 + (proj.position[1] - monster.position[1]) ** 2 < (0.5 / 2) ** 2) {
-        proj.weapon.resolveCollision(monster);
-        const projI = projectileArray.indexOf(proj);
-        if (projI > -1) {
-            projectileArray[projI].toDelete = true;
-        }
-    }
-}
-
-function collisionDetection() {
-    for (let proji = 0; proji < projectileArray.length; proji++) {
-        for (let monsteri = 0; monsteri < monsterArray.length; monsteri++) {
-            CheckCollision(projectileArray[proji], monsterArray[monsteri])
-        }
-    }
-
-    let i = projectileArray.length;
-    while (i--) {
-        if (projectileArray[i].toDelete) {
-            projectileArray.splice(i, 1);
-        }
-    }
-
-    for (let shardI = 0; shardI < xpArray.length; shardI++) {
-
-        let xpShard = xpArray[shardI];
-
-        if ((xpShard.position[0] - currPlayer.position[0]) ** 2 + (xpShard.position[1] - currPlayer.position[1]) ** 2 < (2 / 2) ** 2) {
-            currPlayer.currentXp += xpShard.xpValue;
-            const projI = xpArray.indexOf(xpShard);
-            if (projI > -1) {
-                xpShard.toDelete = true;
-            }
-        }
-    }
-
-    i = xpArray.length;
-    while (i--) {
-        if (xpArray[i].toDelete) {
-            xpArray.splice(i, 1);
-        }
-    }
-
-
+function pickCurrentPlayerWeaponRd()
+{
+    let idx = Math.min(Math.random() * currPlayer.weaponArray.length, currPlayer.weaponArray.length - 1);
+    return currPlayer.weaponArray[Math.floor(idx)];
 }

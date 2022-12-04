@@ -69,12 +69,17 @@ class Player extends Entity {
         this.weaponArray = [new Weapon(50, 3, 10)];
         this.level = 0;
         this.currentXp = 0;
+        this.invulDelay = 0;
     }
     draw() {
         ctx.beginPath();
         let screenPos = positionToScreen(this.position[0], this.position[1])
         ctx.rect(screenPos[0] - 5, screenPos[1] - 5, 10, 10);
         ctx.fillStyle = "#0095DD";
+        if((this.invulDelay % 20) - 5 > 0)
+        {
+            ctx.fillStyle = "#0095DD87";
+        }
         ctx.fill();
         ctx.closePath();
     }
@@ -90,7 +95,20 @@ class Player extends Entity {
             this.currentXp -= currPlayer.level * 20.0 + 10.0;
             levelUp();
         }
+        if(this.invulDelay > 0)
+        {
+            this.invulDelay--;
+        }
         super.timeStep()
+        this.weaponStep()
+    }
+    resolveCollision(monster)
+    {
+        if(this.invulDelay<=0)
+        {
+            this.currHealth--;
+            this.invulDelay += 100;
+        }
     }
 }
 
@@ -127,30 +145,39 @@ class Target extends Entity {
         while (i--) {
             switch (this.state[i]) {
                 case State.INFEST:
-                    aoeArray.push(new Swamp(this.position[0], this.position[1], 10, 200, 20));
+                    aoeArray.push(new Swamp(this.position[0], this.position[1], 10, 10, 2, 50));
             }
         }
     }
 }
 
 class Swamp extends Entity {
-    constructor(x, y, damage, delay, zone) {
+    constructor(x, y, damage, delay, zone, lifetime) {
         super(x, y);
+        this.offset = currentTime;
         this.damage = damage;
         this.delay = delay;
         this.zone = zone;
+        this.lifetime = lifetime;
     }
     draw() {
         ctx.beginPath();
         let screenPos = positionToScreen(this.position[0], this.position[1])
-        ctx.arc(screenPos[0], screenPos[1], this.zone, 0, 2 * Math.PI);
+        ctx.arc(screenPos[0], screenPos[1], this.zone * xRatio, 0, 2 * Math.PI);
 
-        let weight = (currentTime%this.zone)/this.zone;
+        let weight = ((currentTime - this.offset)%this.delay)/this.delay;
         let color = blendColors("#3cff00", "#000000", weight);
 
         ctx.fillStyle = color;
 
         ctx.fill();
         ctx.closePath();
+    }
+    resolveCollision(monster){
+        if(((currentTime - this.offset)%this.delay) == 0)
+        {
+            monster.currHealth -= this.damage;
+        }
+        
     }
 }

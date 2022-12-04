@@ -3,7 +3,7 @@ class SnakeFang extends Weapon {
         super(refreshRate, speed, dmg);
         this.name = "Snake Fangs";
     }
-    resolveCollision(currEntity) {
+    resolveSpecialCollision(currEntity) {
         if (!currEntity.state.includes(State.POISON)) {
             currEntity.state.push(State.POISON);
         }
@@ -15,7 +15,7 @@ class PhoenixFeather extends Weapon {
         super(refreshRate, speed, dmg);
         this.name = "PhoenixFeather";
     }
-    resolveCollision(currEntity) {
+    resolveSpecialCollision(currEntity) {
         if (!currEntity.state.includes(State.BURN)) {
             currEntity.state.push(State.BURN);
         }
@@ -27,9 +27,10 @@ class SpiderSting extends Weapon {
         super(refreshRate, speed, dmg);
         this.name = "SpiderSting";
     }
-    resolveCollision(currEntity) {
+    resolveSpecialCollision(currEntity) {
         if (!currEntity.state.includes(State.INFEST)) {
             currEntity.state.push(State.INFEST);
         }
     }
 }
+

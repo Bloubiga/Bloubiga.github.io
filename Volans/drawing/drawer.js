@@ -36,18 +36,49 @@ function drawXPBar() {
     ctx.closePath();
 }
 
+function drawPlayerUI() {
+    ctx.beginPath();
+
+    let margin = 2;
+    let healthWidth = 2;
+
+    let healthXPosLeft = xMin + margin;
+    let healthXPosRight = xMin + margin + 3*healthWidth;
+
+    let healthYPosLeft = yMin + margin;
+    let healthYPosRight = yMin + margin + healthWidth;
+
+    let screenPosMin = positionToScreen(healthXPosLeft, healthYPosLeft);
+    let screenPosMax = positionToScreen(healthXPosRight, healthYPosRight);
+
+    ctx.fillStyle = "#da0b0b";
+
+    let hpRatio = currPlayer.currHealth / currPlayer.maxHealth;
+
+    ctx.fillRect(screenPosMin[0], screenPosMin[1], (screenPosMax[0] - screenPosMin[0])*hpRatio, 10);
+    ctx.strokeRect(screenPosMin[0], screenPosMin[1], screenPosMax[0] - screenPosMin[0], 10);
+    ctx.closePath();
+    
+
+}
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!pause) {
+        drawAOE();
         currPlayer.draw();
         drawTarget();
         drawProjectiles();
-        drawAOE();
         drawXPShard();
         drawXPBar();
+        drawPlayerUI();
         let xAcc = currPlayer.position[2];
         let yAcc = currPlayer.position[3];
 
+        ctx.fillStyle = "#000000";
+        ctx.font = '10px serif';
+        
         ctx.strokeText(String(Number(xAcc).toFixed(2)), 10, 50);
         ctx.strokeText(String(Number(yAcc).toFixed(2)), 10, 60);
     }
@@ -87,8 +118,8 @@ function drawChoice() {
         ctx.fillStyle = "#000000";
         ctx.lineWidth = 1;
 
-        ctx.font = '50px serif';
-        ctx.fillText(levelUpChoiceArray[choiceIdx].name, margin / 2 + 10, margin / 2 + choiceIdx * choiceHeight + choiceHeight / 2)
+        ctx.font = '20px serif';
+        ctx.fillText(levelUpChoiceArray[choiceIdx].text, margin / 2 + 10, margin / 2 + choiceIdx * choiceHeight + choiceHeight / 2)
         ctx.closePath();
     }
 }
